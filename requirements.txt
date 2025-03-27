@@ -1,0 +1,7 @@
+isort==6.0.1
+black==25.1.0
+tokenize-rt==6.1.0
+ipykernel==6.29.5
+pandas==2.2.3
+nltk==3.9.1
+torch==2.6.0
