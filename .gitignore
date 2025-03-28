@@ -1,6 +1,12 @@
 # Processed data csv files (ignore for now, will be added to git when things are stable)
 data/processed/*.csv
 
+# Saved models
+models/*.pth
+
+# System files
+.DS_Store
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
