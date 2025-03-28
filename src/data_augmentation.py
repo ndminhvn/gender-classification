@@ -6,7 +6,7 @@ import nltk
 import pandas as pd
 from nltk.corpus import wordnet
 
-from .config import NLTK_DATA_DIR
+from config import NLTK_DATA_DIR
 
 # Download the WordNet and Open Multilingual WordNet (OMW) corpora from nltk
 nltk.download("wordnet", download_dir=NLTK_DATA_DIR)
