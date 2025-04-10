@@ -21,7 +21,7 @@ class ContrastiveTextDataset(Dataset):
     Two augmented versions are generated on the fly.
     """
 
-    def __init__(self, texts, tokenizer, max_length=256, augment=True):
+    def __init__(self, texts, tokenizer, max_length=128, augment=True):
         self.texts = texts  # list of posts
         self.tokenizer = tokenizer
         self.max_length = max_length
@@ -73,7 +73,7 @@ class SupervisedTextDataset(Dataset):
     Each sample is a (post, label) pair.
     """
 
-    def __init__(self, texts, labels, tokenizer, max_length=256, augment=False):
+    def __init__(self, texts, labels, tokenizer, max_length=128, augment=False):
         self.texts = texts
         self.labels = labels  # list/array of labels (e.g., 0 for M, 1 for F)
         self.tokenizer = tokenizer
@@ -232,7 +232,7 @@ def contrastive_pretrain(
         )
     # Optionally save the pre-trained model
     torch.save(
-        model.state_dict(), os.path.join("models", f"bert_contrastive_pretrained_e{num_epochs}_m256.pth")
+        model.state_dict(), os.path.join("models", f"bert_contrastive_pretrained.pth")
     )
     print("Contrastive pre-training complete.")
 
@@ -381,8 +381,8 @@ def main():
 
     # Optionally, load pre-trained weights:
     model.load_state_dict(
-        # torch.load(os.path.join("models", "bert_contrastive_pretrained.pth"))
-        torch.load(os.path.join("models", "bert_contrastive_pretrained_e5_m256.pth"))
+        torch.load(os.path.join("models", "bert_contrastive_pretrained.pth"))
+        # torch.load(os.path.join("models", "bert_contrastive_pretrained_e5_m256.pth"))
     )
 
     print("Loaded pre-trained contrastive model weights.")
@@ -398,7 +398,7 @@ def main():
 
     # Evaluate on test set
     model.load_state_dict(
-        torch.load(os.path.join("models", "best_bert_supervised_m256.pth"))
+        torch.load(os.path.join("models", "best_bert_supervised.pth"))
     )
     print("Loaded best supervised model weights.")
     test_acc = evaluate_classifier(model, test_loader, device)
