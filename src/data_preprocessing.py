@@ -77,21 +77,26 @@ def clean_text(text: str) -> str:
     # Remove punctuation
     text = text.translate(str.maketrans("", "", string.punctuation))
 
+    # Disable the tokenizer for now (we use the tokenizer in the model)
     # Tokenize the text
-    text = " ".join(nltk.word_tokenize(text))
+    # text = " ".join(nltk.word_tokenize(text))
 
     return text
 
 
-def normalize_labels(data: pd.DataFrame, label_column: str) -> pd.DataFrame:
+def normalize_labels(
+    data: pd.DataFrame, label_column: str, convert_to_int: bool = True
+) -> pd.DataFrame:
     """Normalize the labels (genders) in the dataframe
     - Remove spaces
     - Convert labels to uppercase  (if not already)
+    - Convert labels to binary (0, 1) if they are not already
 
 
     Args:
         data (pd.DataFrame): Dataframe containing the data
         label_column (str): Column name containing the labels
+        convert_to_int (bool): Whether to convert labels to int (0, 1) - default is True
 
     Returns:
         pd.DataFrame: Dataframe with normalized labels
@@ -104,6 +109,11 @@ def normalize_labels(data: pd.DataFrame, label_column: str) -> pd.DataFrame:
 
     # Convert labels to uppercase
     data[label_column] = data[label_column].str.upper()
+
+    # Convert labels to binary (0, 1) if they are not already
+    if convert_to_int:
+        data[label_column] = data[label_column].map({"M": 0, "F": 1})
+        data[label_column] = data[label_column].astype(int)
 
     return data
 
@@ -159,17 +169,17 @@ def save_processed_data(data: pd.DataFrame, output_dir: str, filename: str):
 
 
 # Example usage, otherwise used in the pipeline
-# if __name__ == "__main__":
-#     raw_data_path = "data/raw/gender-classification.csv"
-#     processed_data_path = "data/processed"
-#     processed_data_filename = "processed_data.csv"
-#     text_column = "text"
-#     label_column = "gender"
-#     try:
-#         raw_data = load_data(raw_data_path)
-#         preprocessed_data = preprocess_data(raw_data, text_column, label_column)
-#         save_processed_data(
-#             preprocessed_data, processed_data_path, processed_data_filename
-#         )
-#     except Exception as e:
-#         print(f"Error: {str(e)}")
+if __name__ == "__main__":
+    raw_data_path = "data/raw/gender-classification.csv"
+    processed_data_path = "data/processed"
+    processed_data_filename = "processed_data.csv"
+    text_column = "text"
+    label_column = "gender"
+    try:
+        raw_data = load_data(raw_data_path)
+        preprocessed_data = preprocess_data(raw_data, text_column, label_column)
+        save_processed_data(
+            preprocessed_data, processed_data_path, processed_data_filename
+        )
+    except Exception as e:
+        print(f"Error: {str(e)}")
