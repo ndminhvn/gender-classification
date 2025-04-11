@@ -71,7 +71,10 @@ the gender of the author of a new blog.
     python src/supervised_fine_tune.py
     ```
 
-2. Perform evaluation on the trained model - WIP
+2. Perform model evaluation on train/val/test datasets:
+    ```bash
+    python evaluate.py
+    ```
 
 
 ## Project Structure
@@ -91,6 +94,7 @@ the gender of the author of a new blog.
   - `evaluation.py`: Code for evaluating the model's performance with various metrics.
   - `utils.py`: Utility functions
 - `training_pipeline.py`: Main script for running the entire training pipeline.
+- `evaluate.py`: Script for evaluating the model on train/val/test datasets.
 - `pipeline.ipynb`: Jupyter notebook version of the pipeline script for visualization.
 - `requirements.txt`: List of required Python packages.
 - `README.md`: This file, providing an overview of the project.
