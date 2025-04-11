@@ -1,5 +1,8 @@
 # Processed data csv files (ignore for now, will be added to git when things are stable)
-# data/processed/*.csv
+data/processed/*.csv
+
+# Vscode settings
+.vscode/
 
 # Saved models
 models/*.pth
