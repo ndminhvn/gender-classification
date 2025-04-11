@@ -20,6 +20,13 @@ def fine_tune_supervised(
     best_epoch = 0
     best_model_state = None
 
+    # Track training/validation loss and accuracy
+    history = {
+        "train_loss": [],
+        "val_accuracy": [],
+        "val_loss": [],
+    }
+
     for epoch in range(num_epochs):
         model.train()
         total_loss = 0.0
@@ -36,10 +43,22 @@ def fine_tune_supervised(
             loss.backward()
             optimizer.step()
             total_loss += loss.item() * input_ids.size(0)
+
+        # Compute average loss for the epoch
         avg_loss = total_loss / len(train_loader.dataset)
-        val_acc = evaluate_classifier(model, val_loader, device)
+
+        # Evaluate on validation set
+        val_eval = evaluate_classifier(model, val_loader, device, full_report=False)
+        val_acc = val_eval["accuracy"]
+        val_loss = val_eval["loss"]
+
+        # Store training and validation metrics
+        history["train_loss"].append(avg_loss)
+        history["val_accuracy"].append(val_acc)
+        history["val_loss"].append(val_loss)
+
         print(
-            f"Epoch [{epoch+1}/{num_epochs}] - Train Loss: {avg_loss:.4f}, Val Acc: {val_acc:.4f}"
+            f"Epoch [{epoch+1}/{num_epochs}] - Train Loss: {avg_loss:.4f}, Val Loss: {val_loss:.4f}, Val Acc: {val_acc:.4f}"
         )
 
         # Save model if validation accuracy improves
@@ -63,7 +82,7 @@ def fine_tune_supervised(
             break
 
     print("Supervised fine-tuning complete.")
-    return best_val_acc
+    return history, best_val_acc
 
 
 def supervised_fine_tune_pipeline():
@@ -127,7 +146,7 @@ def supervised_fine_tune_pipeline():
     # SUPERVISED FINE-TUNING PHASE
     optimizer_ft = optim.Adam(model.parameters(), lr=2e-5, weight_decay=1e-4)
 
-    best_val_acc = fine_tune_supervised(
+    _, best_val_acc = fine_tune_supervised(
         model, train_loader, val_loader, optimizer_ft, device, num_epochs=20, patience=3
     )
 

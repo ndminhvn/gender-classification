@@ -8,7 +8,7 @@ from sklearn.metrics import (
 )
 
 
-def evaluate_classifier(model, dataloader, device):
+def evaluate_classifier(model, dataloader, device, full_report=True):
     """Evaluates the classifier model on the given dataloader.
     This function computes the average loss, accuracy, F1 score,
     confusion matrix, and classification report for the model's predictions.
@@ -17,6 +17,9 @@ def evaluate_classifier(model, dataloader, device):
         model (BertContrastiveModel): The classifier model to evaluate.
         dataloader (DataLoader): The dataloader containing the evaluation data.
         device (torch.device): The device (CPU or GPU).
+        full_report (bool): If True, includes the full classification report.
+            If False, only includes accuracy and loss.
+            Default is True.
 
     Returns:
         dict: A dictionary containing evaluation metrics including
@@ -54,6 +57,16 @@ def evaluate_classifier(model, dataloader, device):
     # Compute average loss
     avg_loss = total_loss / len(dataloader.dataset)
     acc = accuracy_score(all_labels, all_preds)
+
+    # If full_report is False, return only loss and accuracy
+    # This is useful for quick evaluations in epochs (in fine-tuning)
+    if not full_report:
+        return {
+            "loss": avg_loss,
+            "accuracy": acc,
+        }
+
+    # If full_report is True, compute additional metrics
     f1 = f1_score(all_labels, all_preds, average="weighted")
     cm = confusion_matrix(all_labels, all_preds)
     report = classification_report(
