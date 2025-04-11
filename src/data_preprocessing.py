@@ -6,7 +6,7 @@ import string
 import nltk
 import pandas as pd
 
-from config import NLTK_DATA_DIR
+from src.config import NLTK_DATA_DIR
 
 # Download the stopwords and punkt tokenizer from nltk
 # and save them in the venv/nltk_data directory

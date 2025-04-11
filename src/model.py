@@ -1,147 +1,118 @@
-import torch
 import torch.nn as nn
-import torch.nn.functional as F
+from transformers import BertModel
+
+##########################################
+# Model Definition
+##########################################
 
 
-class TextEncoder(nn.Module):
+class BertContrastiveModel(nn.Module):
     """
-    A simple text encoder using an Embedding layer followed by an BiLSTM
+    BERT-based model for contrastive learning and classification.
+
+    This model uses a BERT encoder for feature extraction and includes
+    a projection head for contrastive learning. Additionally, it has a
+    classifier head for down-stream classification tasks.
+
+    The model is initialized with a projection dimension, number of labels,
+    and dropout probability for the classifier head.
+
+    The `encode` method is used to obtain the BERT representations
+    (pooled output - corresponding to the [CLS] token) for the input
+    sequences. The input sequences are passed through the BERT model
+    to obtain the pooled output, which is then passed through the
+    projection head for contrastive learning.
+
+    The contrastive learning part of the model is implemented in the
+    `forward_contrastive` method, while the classification part is
+    implemented in the `forward_classifier` method.
     """
 
-    def __init__(
-        self,
-        vocab_size: int,
-        embedding_dim: int,
-        hidden_dim: int,
-        num_layers: int = 1,
-        bidirectional: bool = True,
-    ):
-        super(TextEncoder, self).__init__()
-        self.embedding = nn.Embedding(vocab_size, embedding_dim)
-        self.lstm = nn.LSTM(
-            embedding_dim,
-            hidden_dim,
-            num_layers=num_layers,
-            bidirectional=bidirectional,
-            batch_first=True,
+    def __init__(self, proj_dim=64, num_labels=2, dropout_prob=0.3):
+        super(BertContrastiveModel, self).__init__()
+        # BERT encoder (base model without classification head)
+        self.bert = BertModel.from_pretrained("bert-base-uncased")
+        hidden_size = self.bert.config.hidden_size
+
+        # Projection head for contrastive learning
+        self.projection_head = nn.Sequential(
+            nn.Linear(hidden_size, hidden_size),
+            nn.ReLU(),
+            nn.Linear(hidden_size, proj_dim),
         )
-        self.bidirectional = bidirectional
-        self.hidden_dim = hidden_dim
 
-    def forward(self, x):
-        """
-        x: Tensor of shape (batch_size, sequence_length) with token indices
-        Returns a representation for each input in the batch
-        """
-        # (batch_size, sequence_length, embedding_dim)
-        embedded = self.embedding(x)
-        # LSTM output shape: (batch_size, sequence_length, hidden_dim * num_directions)
-        lstm_out, _ = self.lstm(embedded)
-        # Use mean pooling over the time dimension as the representation.
-        representation = torch.mean(lstm_out, dim=1)
-        return representation
-
-
-class ProjectionHead(nn.Module):
-    """
-    Projection head for mapping encoder outputs to a latent space for contrastive learning
-    """
-
-    def __init__(self, input_dim: int, proj_dim: int):
-        super(ProjectionHead, self).__init__()
-        self.fc1 = nn.Linear(input_dim, input_dim)
-        self.fc2 = nn.Linear(input_dim, proj_dim)
-
-    def forward(self, x):
-        x = F.relu(self.fc1(x))
-        x = self.fc2(x)
-        return x
-
-
-class ClassifierHead(nn.Module):
-    """
-    A simple classifier head for predicting class labels
-    """
-
-    def __init__(self, input_dim: int, num_classes: int):
-        super(ClassifierHead, self).__init__()
-        self.fc = nn.Linear(input_dim, num_classes)
-
-    def forward(self, x):
-        logits = self.fc(x)
-        return logits
-
-
-class ContrastiveModel(nn.Module):
-    """
-    Complete model combining a text encoder, projection head (for contrastive learning),
-    and classifier head (for supervised classification)
-    """
-
-    def __init__(
-        self,
-        vocab_size: int,
-        embedding_dim: int,
-        hidden_dim: int,
-        proj_dim: int,
-        num_classes: int,
-        num_layers: int = 1,
-        bidirectional: bool = True,
-    ):
-        super(ContrastiveModel, self).__init__()
-        self.encoder = TextEncoder(
-            vocab_size,
-            embedding_dim,
-            hidden_dim,
-            num_layers=num_layers,
-            bidirectional=bidirectional,
+        # Classifier head for gender classification
+        self.classifier = nn.Sequential(
+            nn.Dropout(dropout_prob),
+            nn.Linear(hidden_size, num_labels),
         )
-        # Adjust the encoder output dimension based on whether it is bidirectional
-        encoder_output_dim = hidden_dim * 2 if bidirectional else hidden_dim
-        self.projection_head = ProjectionHead(encoder_output_dim, proj_dim)
-        self.classifier_head = ClassifierHead(encoder_output_dim, num_classes)
 
-    def forward(self, x):
+    def encode(self, input_ids, attention_mask, token_type_ids):
+        """Encode input sequences using BERT.
+
+        This method takes the input sequences and their corresponding
+        attention masks and token type IDs, and passes them through the
+        BERT model to obtain the pooled output (typically corresponding
+        to the [CLS] token). The pooled output is then returned.
+
+        The input sequences are expected to be tokenized and padded
+        appropriately before being passed to this method.
+
+        The pooled output is a tensor of shape (batch_size, hidden_size),
+        where batch_size is the number of input sequences and hidden_size
+        is the dimensionality of the BERT hidden states.
+
+        Args:
+            input_ids (_type_): tokenized input sequences
+            attention_mask (_type_): indicates which tokens are padding tokens
+            token_type_ids (_type_): used to distinguish between different segments
+                                    in the input sequences
+
+        Returns:
+            tensor: pooled output from BERT
         """
-        Forward pass for classification
-        Returns class logits
+        # Get BERT representations (pooled output typically corresponds to [CLS])
+        outputs = self.bert(
+            input_ids=input_ids,
+            attention_mask=attention_mask,
+            token_type_ids=token_type_ids,
+        )
+        pooled_output = outputs.pooler_output  # shape: (batch_size, hidden_size)
+        return pooled_output
+
+    # For classifier, we may not need to use the projection head
+    def forward_contrastive(self, input_ids, attention_mask, token_type_ids):
+        """Forward pass for contrastive learning using the projection head.
+
+        The projection head is a simple feed-forward neural network that
+        takes the BERT pooled output and projects it into
+        a lower-dimensional space for contrastive learning.
+
+        Args:
+            input_ids (_type_): tokenized input sequences
+            attention_mask (_type_): used to indicate which tokens are padding tokens
+            token_type_ids (_type_): distinguish between different segments in the input sequences
+
+        Returns:
+            tensor: projected output from the projection head
         """
-        representation = self.encoder(x)
-        logits = self.classifier_head(representation)
+        pooled_output = self.encode(input_ids, attention_mask, token_type_ids)
+        projection = self.projection_head(pooled_output)
+        return projection
+
+    # We can use the pooled output directly for classification
+    def forward_classifier(self, input_ids, attention_mask, token_type_ids):
+        """Forward pass for classification using the classifier head.
+
+        The classifier head is a feed-forward neural network that takes the
+        BERT pooled output and produces logits for the classification task.
+        Args:
+            input_ids (_type_): tokenized input sequences
+            attention_mask (_type_): used to indicate which tokens are padding tokens
+            token_type_ids (_type_): distinguish between different segments in the input sequences
+        Returns:
+            tensor: logits for the classification task
+        """
+        pooled_output = self.encode(input_ids, attention_mask, token_type_ids)
+        logits = self.classifier(pooled_output)
         return logits
-
-    def forward_contrastive(self, x):
-        """
-        Forward pass for contrastive learning
-        Returns the projected latent vectors
-        """
-        representation = self.encoder(x)
-        proj = self.projection_head(representation)
-        return proj
-
-
-# Example usage:
-# if __name__ == "__main__":
-#     batch_size = 4
-#     seq_length = 10
-#     vocab_size = 10000
-#     embedding_dim = 128
-#     hidden_dim = 256
-#     proj_dim = 64
-#     num_classes = 2
-
-#     # Create a dummy batch of tokenized sequences
-#     dummy_input = torch.randint(0, vocab_size, (batch_size, seq_length))
-
-#     # Instantiate the model
-#     model = ContrastiveModel(
-#         vocab_size, embedding_dim, hidden_dim, proj_dim, num_classes
-#     )
-
-#     # Classification forward pass
-#     logits = model(dummy_input)
-#     print("Classification logits shape:", logits.shape)
-
-#     # Contrastive forward pass
-#     proj_vectors = model.forward_contrastive(dummy_input)
-#     print("Projection vectors shape:", proj_vectors.shape)
