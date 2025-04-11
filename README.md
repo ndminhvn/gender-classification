@@ -49,33 +49,44 @@ the gender of the author of a new blog.
    ```
 
 ## Usage
-1. Run the main training pipeline script (If no trained model is available in `models/`):
+1. Download the pre-trained model from our [Hugging Face Model Hub](https://huggingface.co/ndminhvn/BertContrastiveModel/tree/main):
+- `bert_contrastive_pretrained.pth` (Pre-trained contrastive model)
+- `best_bert_supervised.pth` (Fine-tuned supervised model)
+- Place the downloaded files in the `models/` directory.
 
-***NOTE: This step may take a long time to run, depending on the size of the dataset and the hardware used.***
+2. Run the main training pipeline script (Optional - if no trained model is available in `models/`, or if you want to retrain the model):
+
+**_NOTE: This step may take a long time to run, depending on the size of the dataset and the hardware used._**
+
+```bash
+python pipeline.py
+```
+
+This will execute the entire training and evaluation pipeline, including data preprocessing contrastive learning, supervised fine-tuning, and evaluation.
+
+- Or you can run each step separately by running the corresponding scripts in the `src/` directory.
+- For example, to run the data preprocessing step (optional - as the processed data is already available in `data/processed/`):
   ```bash
-  python pipeline.py
+  python src/data_preprocessing.py
   ```
-  This will execute the entire training and evaluation pipeline, including data preprocessing contrastive learning, supervised fine-tuning, and evaluation.
+- To run the contrastive learning step (run if no contrastive pre-trained model is available in `models/`):
 
-  - Or you can run each step separately by running the corresponding scripts in the `src/` directory.
-  - For example, to run the data preprocessing step:
-    ```bash
-    python src/data_preprocessing.py
-    ```
-  - To run the contrastive learning step:
-    ```bash
-    python src/contrastive_learning.py
-    ```
-  - To run the supervised fine-tuning step (after contrastive learning, or if a contrastive pre-trained model is available):
-    ```bash
-    python src/supervised_fine_tune.py
-    ```
+  **_NOTE: Run only if you want to retrain the contrastive model._**
+  ```bash
+  python src/contrastive_learning.py
+  ```
 
-2. Perform model evaluation on train/val/test datasets (Assuming a trained model is available in `models/`):
-    ```bash
-    python evaluate.py
-    ```
+- To run the supervised fine-tuning step (after contrastive learning, or if a contrastive pre-trained model is available):
 
+  **_NOTE: Run only if you want to retrain the supervised model._**
+  ```bash
+  python src/supervised_fine_tune.py
+  ```
+
+3. Perform model evaluation on train/val/test datasets (Assuming a trained model is available in `models/`):
+```bash
+python evaluate.py
+```
 
 ## Project Structure
 
