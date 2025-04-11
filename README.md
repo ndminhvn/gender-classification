@@ -71,7 +71,7 @@ the gender of the author of a new blog.
     python src/supervised_fine_tune.py
     ```
 
-2. Perform model evaluation on train/val/test datasets:
+2. Perform model evaluation on train/val/test datasets (Assuming a trained model is available in `models/`):
     ```bash
     python evaluate.py
     ```
@@ -89,7 +89,7 @@ the gender of the author of a new blog.
   - `data_augmentation.py`: Code for augmenting the dataset.
   - `dataset.py`: Code for creating custom dataset classes for contrastive learning and supervised fine-tuning.
   - `model.py`: Code for defining and training the machine learning model.
-  - `contrastive_learning.py`: odeC for implementing contrastive learning.
+  - `contrastive_learning.py`: Code for implementing contrastive learning.
   - `supervised_fine_tune.py`: Code for fine-tuning the model with supervised learning.
   - `evaluation.py`: Code for evaluating the model's performance with various metrics.
   - `utils.py`: Utility functions
