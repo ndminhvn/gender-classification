@@ -97,3 +97,59 @@ class SupervisedTextDataset(Dataset):
             encoded[key] = encoded[key].squeeze(0)
         label = torch.tensor(self.labels[idx], dtype=torch.long)
         return encoded, label
+
+
+class SupervisedContrastiveTextDataset(Dataset):
+    """
+    Dataset for supervised contrastive learning.
+    Each sample returns the original + 1 augmented version of the same post and its label.
+    """
+
+    def __init__(self, texts, labels, tokenizer, max_length=128, augment=True):
+        self.texts = texts
+        self.labels = labels  # list of labels (0 for M, 1 for F)
+        self.tokenizer = tokenizer
+        self.max_length = max_length
+        self.augment = augment
+
+    def __len__(self):
+        return len(self.texts)
+
+    def __getitem__(self, idx):
+        # text is already cleaned in the preprocessing step
+        post = self.texts[idx]
+        label = self.labels[idx]
+
+        if self.augment:
+            # view1 = random_deletion(post, p=0.2)
+            view1 = post
+            view2 = random_deletion(post, p=0.15)
+        else:
+            view1 = post
+            view2 = post
+
+        # Tokenize the og + 1 view using BERT tokenizer
+        encoded_view1 = self.tokenizer.encode_plus(
+            view1,
+            add_special_tokens=True,
+            max_length=self.max_length,
+            truncation=True,
+            padding="max_length",
+            return_tensors="pt",
+        )
+        encoded_view2 = self.tokenizer.encode_plus(
+            view2,
+            add_special_tokens=True,
+            max_length=self.max_length,
+            truncation=True,
+            padding="max_length",
+            return_tensors="pt",
+        )
+        # Squeeze the extra dimension (batch dimension from tokenizer)
+        for key in encoded_view1:
+            encoded_view1[key] = encoded_view1[key].squeeze(0)
+            encoded_view2[key] = encoded_view2[key].squeeze(0)
+
+        # Convert label to tensor
+        label = torch.tensor(label, dtype=torch.long)
+        return (encoded_view1, encoded_view2, label)

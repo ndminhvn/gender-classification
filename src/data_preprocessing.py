@@ -118,6 +118,84 @@ def normalize_labels(
     return data
 
 
+def normalize_labels_for_blog_dataset(
+    data: pd.DataFrame, label_column: str, convert_to_int: bool = True
+) -> pd.DataFrame:
+    """Normalize the gender labels in the dataframe
+    - Convert "male"/"female" to 0/1
+
+    Args:
+        data (pd.DataFrame): Dataframe containing the data
+        label_column (str): Column name containing the labels
+        convert_to_int (bool, optional): Whether to convert labels to int (0, 1) - default is True
+
+    Returns:
+        pd.DataFrame: Dataframe with normalized labels
+    """
+    # Ensure label column is string type
+    # data[label_column] = data[label_column].astype(str).fillna("")
+
+    # # Remove spaces from labels
+    # data[label_column] = data[label_column].str.strip()
+
+    # Convert labels to binary (0, 1) if they are not already
+    if convert_to_int:
+        data[label_column] = data[label_column].map({"male": 0, "female": 1})
+        data[label_column] = data[label_column].astype(int)
+
+    return data
+
+
+def preprocess_blog_data(
+    data: pd.DataFrame, text_column: str, label_column: str
+) -> pd.DataFrame:
+    """Preprocess the blog data and return a new dataframe (without modifying the original dataframe)
+    - Clean the text
+    - Normalize the labels
+    - Drop rows with duplicate text
+    - Keep only 2 columns (text and gender)
+
+    Args:
+        data (pd.DataFrame): Dataframe containing the data
+        text_column (str): Column name containing the text
+        label_column (str): Column name containing the labels
+
+    Returns:
+        pd.DataFrame: Preprocessed dataframe
+    """
+    new_data = data.copy()
+
+    new_data = new_data[[text_column, label_column]]
+    print(f"Blog data loaded successfully with {len(new_data)} rows")
+
+    # Drop rows with NaN values
+    # new_data = new_data.dropna()
+
+    # Drop duplicate rows based on the text column
+    new_data = new_data.drop_duplicates(subset=[text_column])
+    print(f"Duplicate rows dropped. Remaining rows: {len(new_data)}")
+
+    # # Drop rows with empty text
+    # new_data = new_data[new_data[text_column].str.strip() != ""]
+
+    # Clean the text and normalize labels
+    new_data[text_column] = new_data[text_column].apply(clean_text)
+
+    # Ensure text column is string type and fill missing values with empty string
+    new_data[text_column] = new_data[text_column].fillna("")
+    # new_data[text_column] = new_data[text_column].astype(str).fillna("")
+    
+    # Drop rows with NaN values
+    new_data = new_data.dropna(subset=[text_column])
+
+    new_data = normalize_labels_for_blog_dataset(new_data, label_column)
+
+    # Keep only the text and label columns
+
+    print("Blog data preprocessing completed successfully!")
+    return new_data
+
+
 def preprocess_data(
     data: pd.DataFrame, text_column: str, label_column: str
 ) -> pd.DataFrame:
@@ -170,16 +248,36 @@ def save_processed_data(data: pd.DataFrame, output_dir: str, filename: str):
 
 # Example usage, otherwise used in the pipeline
 if __name__ == "__main__":
-    raw_data_path = "data/raw/gender-classification.csv"
-    processed_data_path = "data/processed"
-    processed_data_filename = "processed_data.csv"
-    text_column = "text"
-    label_column = "gender"
+    # raw_data_path = "data/raw/gender-classification.csv"
+    # processed_data_path = "data/processed"
+    # processed_data_filename = "processed_data.csv"
+    # text_column = "text"
+    # label_column = "gender"
+    # try:
+    #     raw_data = load_data(raw_data_path)
+    #     preprocessed_data = preprocess_data(raw_data, text_column, label_column)
+    #     save_processed_data(
+    #         preprocessed_data, processed_data_path, processed_data_filename
+    #     )
+    # except Exception as e:
+    #     print(f"Error: {str(e)}")
+
+    # Example usage for blog dataset
+    blog_data_path = "data/raw/blogtext.csv"
+    blog_processed_data_path = "data/processed"
+    blog_processed_data_filename = "processed_blog_data.csv"
+    blog_text_column = "text"
+    blog_gender_column = "gender"
     try:
-        raw_data = load_data(raw_data_path)
-        preprocessed_data = preprocess_data(raw_data, text_column, label_column)
+        blog_raw_data = load_data(blog_data_path)
+        preprocessed_external_data = preprocess_blog_data(
+            blog_raw_data, blog_text_column, blog_gender_column
+        )
+
         save_processed_data(
-            preprocessed_data, processed_data_path, processed_data_filename
+            preprocessed_external_data,
+            blog_processed_data_path,
+            blog_processed_data_filename,
         )
     except Exception as e:
         print(f"Error: {str(e)}")
