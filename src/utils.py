@@ -1,3 +1,9 @@
+import torch
+from torch.utils.data import DataLoader
+import matplotlib.pyplot as plt
+from sklearn.manifold import TSNE
+
+
 from collections import Counter
 
 
@@ -45,3 +51,50 @@ def tokenizer_to_ids(text, vocab, max_length):
         token_ids += [vocab["<PAD>"]] * (max_length - len(token_ids))
 
     return token_ids
+
+
+def extract_embeddings(model, dataset, device, batch_size=32):
+    model.eval()
+    embeddings = []
+    labels_list = []
+
+    dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=False)
+    with torch.no_grad():
+        for batch in dataloader:
+            # Assuming for the supervised dataset, batch is: (encoded, labels)
+            encoded, labels = batch
+            input_ids = encoded["input_ids"].to(device)
+            attention_mask = encoded["attention_mask"].to(device)
+            token_type_ids = None
+            if "token_type_ids" in encoded:
+                token_type_ids = encoded["token_type_ids"].to(device)
+
+            # Extract features using the encoder (or using forward_projection)
+            # If using forward_classifier, you may lose the fine-grained features.
+            feats = model.encode(input_ids, attention_mask, token_type_ids)
+
+            embeddings.append(feats.cpu())
+            labels_list.append(labels.cpu())
+
+    embeddings = torch.cat(embeddings, dim=0)
+    labels = torch.cat(labels_list, dim=0)
+    return embeddings, labels
+
+
+def plot_embeddings_tsne(embeddings, labels, perplexity=30, n_iter=1000):
+    tsne = TSNE(n_components=2, perplexity=perplexity, n_iter=n_iter, random_state=42)
+    embeddings_2d = tsne.fit_transform(embeddings.numpy())
+
+    plt.figure(figsize=(8, 6))
+    scatter = plt.scatter(
+        embeddings_2d[:, 0],
+        embeddings_2d[:, 1],
+        c=labels.numpy(),
+        cmap="viridis",
+        alpha=0.7,
+    )
+    plt.title("t-SNE Visualization of Learned Embeddings")
+    plt.xlabel("Dimension 1")
+    plt.ylabel("Dimension 2")
+    plt.colorbar(scatter, label="Label")
+    plt.show()
