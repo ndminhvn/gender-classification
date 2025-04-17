@@ -1,10 +1,14 @@
 import os
+from copy import deepcopy
 
 import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader, random_split
-from transformers import BertTokenizer
+from transformers import (
+    BertTokenizer,
+    get_cosine_schedule_with_warmup,
+)
 
 from src.data_preprocessing import load_data
 from src.dataset import SupervisedTextDataset
@@ -13,12 +17,29 @@ from src.model import BertContrastiveModel
 
 
 def fine_tune_supervised(
-    model, train_loader, val_loader, optimizer, device, num_epochs=20, patience=3
+    model,
+    train_loader,
+    val_loader,
+    optimizer,
+    device,
+    num_epochs=20,
+    patience=3,
+    file_name="best_bert_supervised.pth",
 ):
     criterion = nn.CrossEntropyLoss()
     best_val_acc = 0.0
     best_epoch = 0
     best_model_state = None
+
+    # Calculate total training steps for the scheduler:
+    total_steps = len(train_loader) * num_epochs
+
+    scheduler = get_cosine_schedule_with_warmup(
+        optimizer,
+        num_warmup_steps=int(0.1 * total_steps),  # warm up for 10% of total steps
+        num_training_steps=total_steps,
+        num_cycles=0.5,  # half cycle: learning rate decays but stays above zero
+    )
 
     # Track training/validation loss and accuracy
     history = {
@@ -42,6 +63,8 @@ def fine_tune_supervised(
             loss = criterion(logits, labels)
             loss.backward()
             optimizer.step()
+            scheduler.step()  # Update learning rate per step
+
             total_loss += loss.item() * input_ids.size(0)
 
         # Compute average loss for the epoch
@@ -65,16 +88,23 @@ def fine_tune_supervised(
         if val_acc > best_val_acc:
             best_val_acc = val_acc
             best_epoch = epoch
-            best_model_state = model.state_dict()
+            # best_model_state = model.state_dict()
+            # best_model_state = deepcopy(model.state_dict())
 
-            file_name = "best_bert_supervised.pth"
             os.makedirs("models", exist_ok=True)
             file_path = os.path.join("models", file_name)
 
-            torch.save(best_model_state, file_path)
+            # torch.save(best_model_state, file_path)
+
+            # Save entire model state
+            torch.save(model, file_path)
 
             print(f"Best validation accuracy updated: {best_val_acc:.4f}")
             print(f"Best supervised model updated and saved at {file_path}")
+
+        if val_loss >= 0.9:
+            print(f"Validation loss exceeds {val_loss}. Early stopping triggered.")
+            break
 
         # Early stopping check
         if epoch - best_epoch >= patience:
