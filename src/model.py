@@ -36,7 +36,9 @@ class BertContrastiveModel(nn.Module):
 
         # Projection head for contrastive learning
         self.projection_head = nn.Sequential(
-            nn.Linear(hidden_size, hidden_size),
+            # nn.Linear(256, hidden_size),
+            nn.Linear(64, hidden_size),
+            # nn.Linear(hidden_size, hidden_size),
             nn.ReLU(),
             nn.Linear(hidden_size, proj_dim),
         )
