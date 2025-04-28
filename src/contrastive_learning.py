@@ -10,7 +10,7 @@ from src.data_preprocessing import load_data
 from src.dataset import ContrastiveTextDataset
 from src.model import BertContrastiveModel
 
-from sklearn.decomposition import PCA
+# from sklearn.decomposition import PCA
 import joblib
 
 
