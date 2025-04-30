@@ -32,7 +32,7 @@ def hyper_tuning_supervised(
     best_epoch = 0
     best_model_state = None
 
-    optimizer = optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
+    optimizer = optim.AdamW(model.parameters(), lr=lr, weight_decay=weight_decay)
 
     for epoch in range(num_epochs):
         model.train()
@@ -69,7 +69,7 @@ def hyper_tuning_supervised(
             # best_model_state = model.state_dict()
             best_model_state = deepcopy(model.state_dict())
 
-            file_name = "best_bert_supervised_hyper_tuning.pth"
+            file_name = "best_bert_supervised_hyper_tuning_final_2.pth"
             os.makedirs("models", exist_ok=True)
             file_path = os.path.join("models", file_name)
 
@@ -97,11 +97,11 @@ def hyper_tuning_supervised(
 def objective(trial):
     # Hyperparameters to tune:
     dropout_prob = trial.suggest_categorical("dropout_prob", [0.1, 0.3, 0.5])
-    lr = trial.suggest_categorical("lr", [2e-5, 1e-4, 1e-3])
+    lr = trial.suggest_categorical("lr", [2e-5, 1e-4])
     weight_decay = trial.suggest_categorical("weight_decay", [1e-4, 1e-3, 1e-2])
     # num_epochs = trial.suggest_categorical("num_epochs", [10, 15, 20])
     num_epochs = 10
-    batch_size = trial.suggest_categorical("batch_size", [4, 8, 16])
+    batch_size = trial.suggest_categorical("batch_size", [8, 16])
 
     # Load dataset
     processed_path = os.path.join("data", "processed", "processed_data.csv")
@@ -134,7 +134,14 @@ def objective(trial):
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
 
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    if torch.backends.mps.is_available():
+        device = torch.device("mps")
+    elif torch.cuda.is_available():
+        device = torch.device("cuda")
+    else:
+        device = torch.device("cpu")
+    print(f"Using device: {device}")
 
     # Initialize model with hyperparameters from trial.
     model = BertContrastiveModel(proj_dim=64, num_labels=2, dropout_prob=dropout_prob)
@@ -145,7 +152,8 @@ def objective(trial):
         # torch.load(os.path.join("models", "bert_contrastive_pretrained.pth"))
         torch.load(
             # os.path.join("models", "bert_supervised_contrastive_pretrained_final.pth")
-            os.path.join("models", "bert_supervised_contrastive_pretrained_final_v4.pth")
+            # os.path.join("models", "bert_supervised_contrastive_pretrained_final_v4.pth")
+            os.path.join("models", "bert_supervised_contrastive_pretrained_final_pca_2.pth")
         )
     )
 

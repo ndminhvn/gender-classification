@@ -35,12 +35,22 @@ class BertContrastiveModel(nn.Module):
         hidden_size = self.bert.config.hidden_size
 
         # Projection head for contrastive learning
+        # self.projection_head = nn.Sequential(
+        #     # nn.Linear(256, hidden_size),
+        #     nn.Linear(64, hidden_size),
+        #     # nn.Linear(hidden_size, hidden_size),
+        #     nn.ReLU(),
+        #     nn.Linear(hidden_size, proj_dim),
+        # )
+
         self.projection_head = nn.Sequential(
-            # nn.Linear(256, hidden_size),
-            nn.Linear(64, hidden_size),
-            # nn.Linear(hidden_size, hidden_size),
+            nn.Linear(hidden_size, hidden_size),
+            nn.BatchNorm1d(hidden_size),
             nn.ReLU(),
-            nn.Linear(hidden_size, proj_dim),
+            nn.Linear(hidden_size, hidden_size // 2),
+            nn.BatchNorm1d(hidden_size // 2),
+            nn.ReLU(),
+            nn.Linear(hidden_size // 2, proj_dim),
         )
 
         # Classifier head for gender classification

@@ -258,24 +258,24 @@ def supervised_contrastive_pretrain(
 
             optimizer.zero_grad()
             
-            # 1) get BERT pooled outputs
-            with torch.no_grad():  # no grad for BERT during PCA transform
-                pooled = model.encode(input_ids, attention_mask, token_type_ids)  # (2N, 768)
+            # # 1) get BERT pooled outputs
+            # with torch.no_grad():  # no grad for BERT during PCA transform
+            #     pooled = model.encode(input_ids, attention_mask, token_type_ids)  # (2N, 768)
 
-            # 2) apply PCA (on CPU)
-            # pca = joblib.load("models/bert_pca_256.joblib")
-            pca = joblib.load("models/bert_pca_64.joblib")
-            pooled_np = pooled.cpu().numpy()
-            reduced = pca.transform(pooled_np)                     # (2N, K)
-            reduced_t = torch.from_numpy(reduced).to(device)       # back to GPU
+            # # 2) apply PCA (on CPU)
+            # # pca = joblib.load("models/bert_pca_256.joblib")
+            # pca = joblib.load("models/bert_pca_64.joblib")
+            # pooled_np = pooled.cpu().numpy()
+            # reduced = pca.transform(pooled_np)                     # (2N, K)
+            # reduced_t = torch.from_numpy(reduced).to(device)       # back to GPU
 
-            # 3) run through projection head only (bypass forward_contrastive)
-            features = model.projection_head(reduced_t)            # (2N, proj_dim)
+            # # 3) run through projection head only (bypass forward_contrastive)
+            # features = model.projection_head(reduced_t)            # (2N, proj_dim)
             
             
-            # features = model.forward_contrastive(
-            #     input_ids, attention_mask, token_type_ids
-            # )
+            features = model.forward_contrastive(
+                input_ids, attention_mask, token_type_ids
+            )
 
             # Compute supervised contrastive loss
             loss = supervised_contrastive_loss(features, labels, temperature)
