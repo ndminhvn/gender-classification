@@ -30,8 +30,9 @@ class ContrastiveTextDataset(Dataset):
 
         if self.augment:
             # view1 = augment_text(view1, del_prob=0.3, replace_count=2)[0]
-            view1 = random_deletion(post, p=0.3)
-            view2 = random_deletion(post, p=0.3)
+            # view1 = random_deletion(post, p=0.3)
+            view1 = post
+            view2 = random_deletion(post, p=0.15)
         else:
             view1 = post
             view2 = post

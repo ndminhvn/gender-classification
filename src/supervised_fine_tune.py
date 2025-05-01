@@ -26,6 +26,11 @@ def fine_tune_supervised(
     patience=3,
     file_name="best_bert_supervised.pth",
 ):
+    """Supervised fine-tuning phase for the BERT contrastive model.
+    
+    Returns:
+        history (dict): Dictionary containing training and validation loss and accuracy.
+    """
     criterion = nn.CrossEntropyLoss()
     best_val_acc = 0.0
     best_epoch = 0
