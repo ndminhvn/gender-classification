@@ -21,6 +21,7 @@ the gender of the author of a new blog.
   or you can find in `data/raw/blog-gender-dataset.zip`
 - The extracted file is a xlsx file, we converted it to csv format and save it as
   `gender-classification.csv` in `data/raw/`
+- Blog Authorship Corpus from [Kaggle](https://www.kaggle.com/datasets/rtatman/blog-authorship-corpus) is used for supervised contrastive pre-training.
 
 ## Requirements
 
@@ -50,21 +51,22 @@ the gender of the author of a new blog.
 
 ## Usage
 1. Download the pre-trained model from our [Hugging Face Model Hub](https://huggingface.co/ndminhvn/BertContrastiveModel/tree/main):
-- `bert_contrastive_pretrained.pth` (Pre-trained contrastive model)
-- `best_bert_supervised.pth` (Fine-tuned supervised model)
+- `bert_supervised_contrastive_pretrained_final_pca.pth` (Pre-trained contrastive model)
+- `best_bert_supervised_final_pca.pth` (Fine-tuned supervised model)
 - Place the downloaded files in the `models/` directory.
 
 2. Run the main training pipeline script (Optional - if no trained model is available in `models/`, or if you want to retrain the model):
 
 **_NOTE: This step may take a long time to run, depending on the size of the dataset and the hardware used._**
+- Run code in `pipeline_final_pca.ipynb` to execute the entire training pipeline.
 
-```bash
+<!-- ```bash
 python pipeline.py
-```
+``` -->
 
-This will execute the entire training and evaluation pipeline, including data preprocessing contrastive learning, supervised fine-tuning, and evaluation.
+This will execute the entire training and evaluation pipeline, including data preprocessing, supervised contrastive learning, supervised fine-tuning, and evaluation.
 
-- Or you can run each step separately by running the corresponding scripts in the `src/` directory.
+<!-- - Or you can run each step separately by running the corresponding scripts in the `src/` directory.
 - For example, to run the data preprocessing step (optional - as the processed data is already available in `data/processed/`):
   ```bash
   python src/data_preprocessing.py
@@ -86,7 +88,7 @@ This will execute the entire training and evaluation pipeline, including data pr
 3. Perform model evaluation on train/val/test datasets (Assuming a trained model is available in `models/`):
 ```bash
 python evaluate.py
-```
+``` -->
 
 ## Project Structure
 
@@ -104,8 +106,6 @@ python evaluate.py
   - `supervised_fine_tune.py`: Code for fine-tuning the model with supervised learning.
   - `evaluation.py`: Code for evaluating the model's performance with various metrics.
   - `utils.py`: Utility functions
-- `training_pipeline.py`: Main script for running the entire training pipeline.
-- `evaluate.py`: Script for evaluating the model on train/val/test datasets.
-- `pipeline.ipynb`: Jupyter notebook version of the pipeline script for visualization.
+- `pipeline_final_pca.ipynb`: Jupyter notebook version of the pipeline script for visualization.
 - `requirements.txt`: List of required Python packages.
 - `README.md`: This file, providing an overview of the project.
