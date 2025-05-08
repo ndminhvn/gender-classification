@@ -23,6 +23,9 @@ the gender of the author of a new blog.
   `gender-classification.csv` in `data/raw/`
 - Blog Authorship Corpus from [Kaggle](https://www.kaggle.com/datasets/rtatman/blog-authorship-corpus) is used for supervised contrastive pre-training.
 
+## Report Paper
+- You can find the report paper [here](pdf/report.pdf)
+
 ## Requirements
 
 - Python 3.12+
